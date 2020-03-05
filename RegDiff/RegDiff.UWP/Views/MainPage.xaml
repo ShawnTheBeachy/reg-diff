@@ -1,0 +1,365 @@
+﻿<Page x:Class="RegDiff.UWP.Views.MainPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:behaviors="using:Microsoft.Toolkit.Uwp.UI.Animations.Behaviors"
+      xmlns:controls="using:RegDiff.UWP.Controls"
+      xmlns:converters="using:RegDiff.UWP.Converters"
+      xmlns:customModels="using:RegDiff.UWP.Models"
+      xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+      xmlns:local="using:RegDiff.UWP.Views"
+      xmlns:models="using:RegDiff.Core.Models"
+      xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+      xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <converters:ValueWhenConverter x:Key="HasDifferenceToForeground">
+            <converters:ValueWhenConverter.When>
+                <x:Boolean>False</x:Boolean>
+            </converters:ValueWhenConverter.When>
+            <converters:ValueWhenConverter.Value>
+                <SolidColorBrush Color="{ThemeResource SystemColorButtonTextColor}" />
+            </converters:ValueWhenConverter.Value>
+            <converters:ValueWhenConverter.Otherwise>
+                <SolidColorBrush Color="{ThemeResource SystemErrorTextColor}" />
+            </converters:ValueWhenConverter.Otherwise>
+        </converters:ValueWhenConverter>
+        <converters:ValueWhenConverter x:Key="FalseToZero">
+            <converters:ValueWhenConverter.When>
+                <x:Boolean>False</x:Boolean>
+            </converters:ValueWhenConverter.When>
+            <converters:ValueWhenConverter.Value>
+                <x:Double>0</x:Double>
+            </converters:ValueWhenConverter.Value>
+            <converters:ValueWhenConverter.Otherwise>
+                <x:Double>1</x:Double>
+            </converters:ValueWhenConverter.Otherwise>
+        </converters:ValueWhenConverter>
+        <DataTemplate x:Key="RegistryKeyTemplate">
+            <muxc:TreeViewItem ItemsSource="{Binding Children}"
+                               Visibility="{Binding IsVisible, Mode=OneWay}">
+                <muxc:TreeViewItem.ContextFlyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem x:Name="HideKeyMenuItem"
+                                        Click="HideItemMenuItem_Click"
+                                        MinWidth="228"
+                                        Text="Hide">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon FontFamily="ms-appx:///Assets/Icons/RegDiff.ttf#RegDiff"
+                                          Foreground="{ThemeResource SystemAccentColor}"
+                                          Glyph="&#xf100;" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                    </MenuFlyout>
+                </muxc:TreeViewItem.ContextFlyout>
+                
+                <StackPanel Orientation="Horizontal">
+                    <Image Height="24"
+                           Margin="0 0 12 0"
+                           Source="ms-appx:///Assets/Icons/Folder.svg" />
+                    <TextBlock x:Name="InATextBlock"
+                               FontWeight="SemiBold"
+                               Foreground="{ThemeResource SystemAccentColor}"
+                               Margin="0 0 2 0"
+                               Opacity="{Binding IsInA, Converter={StaticResource FalseToZero}}"
+                               Text="A"
+                               VerticalAlignment="Center" />
+                    <TextBlock x:Name="InBTextBlock"
+                               FontWeight="SemiBold"
+                               Foreground="{ThemeResource SystemAccentColor}"
+                               Margin="2 0 0 0"
+                               Opacity="{Binding IsInB, Converter={StaticResource FalseToZero}}"
+                               Text="B"
+                               VerticalAlignment="Center" />
+                    <TextBlock Foreground="{Binding HasDifference, Converter={StaticResource HasDifferenceToForeground}}"
+                               Margin="12 0 0 0"
+                               Text="{Binding Name}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </muxc:TreeViewItem>
+        </DataTemplate>
+        <DataTemplate x:Key="RegistryValueTemplate">
+            <muxc:TreeViewItem Visibility="{Binding IsVisible, Mode=OneWay}">
+                <muxc:TreeViewItem.ContextFlyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem x:Name="HideValueMenuItem"
+                                        Click="HideItemMenuItem_Click"
+                                        MinWidth="228"
+                                        Text="Hide">
+                            <MenuFlyoutItem.Icon>
+                                <FontIcon FontFamily="ms-appx:///Assets/Icons/RegDiff.ttf#RegDiff"
+                                          Foreground="{ThemeResource SystemAccentColor}"
+                                          Glyph="&#xf100;" />
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                    </MenuFlyout>
+                </muxc:TreeViewItem.ContextFlyout>
+
+                <StackPanel Orientation="Horizontal">
+                    <Image Height="24"
+                           Margin="0 0 12 0"
+                           Source="ms-appx:///Assets/Icons/RegistryEditor.svg" />
+                    <TextBlock x:Name="InATextBlock"
+                               FontWeight="SemiBold"
+                               Foreground="{ThemeResource SystemAccentColor}"
+                               Margin="0 0 2 0"
+                               Opacity="{Binding IsInA, Converter={StaticResource FalseToZero}}"
+                               Text="A"
+                               VerticalAlignment="Center" />
+                    <TextBlock x:Name="InBTextBlock"
+                               FontWeight="SemiBold"
+                               Foreground="{ThemeResource SystemAccentColor}"
+                               Margin="2 0 0 0"
+                               Opacity="{Binding IsInB, Converter={StaticResource FalseToZero}}"
+                               Text="B"
+                               VerticalAlignment="Center" />
+                    <TextBlock Foreground="{Binding HasDifference, Converter={StaticResource HasDifferenceToForeground}}"
+                               Margin="12 0 0 0"
+                               Text="{Binding Name}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </muxc:TreeViewItem>
+        </DataTemplate>
+        <local:RegistryItemDataTemplateSelector x:Key="RegistryItemTemplateSelector"
+                                                KeyTemplate="{StaticResource RegistryKeyTemplate}"
+                                                ValueTemplate="{StaticResource RegistryValueTemplate}" />
+        <DataTemplate x:Key="MessageStringTemplate"
+                      x:DataType="x:String">
+            <TextBlock Margin="12"
+                       Text="{x:Bind Mode=OneTime}" />
+        </DataTemplate>
+        <DataTemplate x:Key="UndoHideItemTemplate"
+                      x:DataType="customModels:UndoHideItemModel">
+            <RelativePanel Padding="12">
+                <TextBlock x:Name="HideMessage"
+                           RelativePanel.AlignLeftWithPanel="True"
+                           RelativePanel.AlignVerticalCenterWithPanel="True"
+                           RelativePanel.LeftOf="UndoButton">
+                    Hid node <Run Text="{x:Bind Item.Name}" />.
+                </TextBlock>
+                <HyperlinkButton x:Name="UndoButton"
+                                 Click="UndoButton_Click"
+                                 Command="{x:Bind UndoCommand}"
+                                 RelativePanel.AlignRightWithPanel="True"
+                                 RelativePanel.AlignVerticalCenterWithPanel="True">
+                    <TextBlock Text="Undo" />
+                </HyperlinkButton>
+            </RelativePanel>
+        </DataTemplate>
+        <local:SnackNotificationDataTemplateSelector x:Key="SnackNotificationDataTemplateSelector"
+                                                     HidNodeTemplate="{StaticResource UndoHideItemTemplate}"
+                                                     StringTemplate="{StaticResource MessageStringTemplate}" />
+        <x:Double x:Key="FileProcessingAnimationDuration">200</x:Double>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="131" />
+            <RowDefinition Height="36" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="DiffGrid"
+              Grid.Row="1"
+              Grid.RowSpan="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <RelativePanel x:Name="TreeViewPanel"
+                           Grid.Column="0"
+                           HorizontalAlignment="Stretch"
+                           VerticalAlignment="Stretch">
+                <muxc:TreeView x:Name="ResultTreeView"
+                               Grid.Column="0"
+                               HorizontalAlignment="Stretch"
+                               ItemInvoked="ResultTreeView_ItemInvoked"
+                               ItemTemplateSelector="{StaticResource RegistryItemTemplateSelector}"
+                               ItemsSource="{x:Bind Keys, Mode=OneWay}"
+                               Margin="0 12 0 0"
+                               RelativePanel.Above="TreeViewCommandBar"
+                               RelativePanel.AlignLeftWithPanel="True"
+                               RelativePanel.AlignRightWithPanel="True"
+                               RelativePanel.AlignTopWithPanel="True"
+                               VerticalAlignment="Stretch" />
+                <CommandBar x:Name="TreeViewCommandBar"
+                            RelativePanel.AlignBottomWithPanel="True"
+                            RelativePanel.AlignLeftWithPanel="True"
+                            RelativePanel.AlignRightWithPanel="True">
+                    <AppBarButton x:Name="HideNoDifferencesButton"
+                                  Click="HideNoDifferencesButton_Click"
+                                  Label="Hide keys with no differences">
+                        <AppBarButton.Icon>
+                            <FontIcon FontFamily="ms-appx:///Assets/Icons/RegDiff.ttf#RegDiff"
+                                      Glyph="&#xf100;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                </CommandBar>
+                <StackPanel x:Name="DiffingProgressPanel"
+                            MaxWidth="300"
+                            Orientation="Vertical"
+                            RelativePanel.AlignHorizontalCenterWithPanel="True"
+                            RelativePanel.AlignVerticalCenterWithPanel="True"
+                            Visibility="Collapsed">
+                    <TextBlock x:Name="FileProgressMessage"
+                               Foreground="{ThemeResource ApplicationSecondaryForegroundThemeBrush}"
+                               Margin="0 12 0 0"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Text="{x:Bind DiffingProgressViewModel.Message,Mode=OneWay}" />
+                    <ProgressBar x:Name="FileProgressBar"
+                                 Margin="0 4 0 0"
+                                 Maximum="100"
+                                 Value="{x:Bind DiffingProgressViewModel.Percent, Mode=OneWay}" />
+                </StackPanel>
+            </RelativePanel>
+            <toolkit:GridSplitter Background="{ThemeResource ProgressBarBackgroundThemeBrush}"
+                                  Foreground="White"
+                                  Grid.Column="1"
+                                  MinWidth="0"
+                                  Padding="0"
+                                  ResizeBehavior="BasedOnAlignment"
+                                  ResizeDirection="Columns"
+                                  Width="7">
+                <toolkit:GridSplitter.Element>
+                    <Grid>
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="11"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   IsHitTestVisible="False"
+                                   Text="&#xE784;"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                </toolkit:GridSplitter.Element>
+            </toolkit:GridSplitter>
+            <RelativePanel x:Name="SelectedValuePanel"
+                           Background="{ThemeResource SystemControlAcrylicWindowBrush}"
+                           Grid.Column="2">
+                
+            </RelativePanel>
+        </Grid>
+        <toolkit:DropShadowPanel x:Name="FilePickerPanel"
+                                 Grid.Row="0"
+                                 Grid.RowSpan="2"
+                                 HorizontalContentAlignment="Stretch">
+            <interactivity:Interaction.Behaviors>
+                <behaviors:Offset AutomaticallyStart="True"
+                                  Duration="0"
+                                  OffsetY="-36" />
+                <behaviors:Offset x:Name="FileProcessingPickerOffset"
+                                  AutomaticallyStart="False"
+                                  Duration="{StaticResource FileProcessingAnimationDuration}"
+                                  EasingMode="EaseOut"
+                                  EasingType="Sine"
+                                  OffsetY="0" />
+                <behaviors:Offset x:Name="FileProcessingDonePickerOffset"
+                                  AutomaticallyStart="False"
+                                  Duration="{StaticResource FileProcessingAnimationDuration}"
+                                  EasingMode="EaseOut"
+                                  EasingType="Sine"
+                                  OffsetY="-36" />
+            </interactivity:Interaction.Behaviors>
+
+            <Grid Background="{ThemeResource SystemControlAcrylicWindowBrush}"
+                  HorizontalAlignment="Stretch"
+                  Padding="24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.ColumnSpan="2"
+                           Grid.Row="0"
+                           Margin="0 0 0 24"
+                           Style="{ThemeResource SubtitleTextBlockStyle}"
+                           Text="Choose files to compare">
+                <interactivity:Interaction.Behaviors>
+                    <behaviors:Offset AutomaticallyStart="True"
+                                      Duration="0"
+                                      OffsetY="36" />
+                    <behaviors:Offset x:Name="FileProcessingHeaderOffset"
+                                      AutomaticallyStart="False"
+                                      Duration="{StaticResource FileProcessingAnimationDuration}"
+                                      EasingMode="EaseOut"
+                                      EasingType="Sine"
+                                      OffsetY="0" />
+                    <behaviors:Offset x:Name="FileProcessingDoneHeaderOffset"
+                                      AutomaticallyStart="False"
+                                      Duration="{StaticResource FileProcessingAnimationDuration}"
+                                      EasingMode="EaseOut"
+                                      EasingType="Sine"
+                                      OffsetY="36" />
+                </interactivity:Interaction.Behaviors>
+                </TextBlock>
+                <local:FilePicker x:Name="FilePickerA"
+                                  DataContext="{x:Bind ViewModelA, Mode=OneWay}"
+                                  FileProcessingEnded="FilePicker_FileProcessingEnded"
+                                  FileProcessingStarted="FilePicker_FileProcessingStarted"
+                                  Grid.Column="0"
+                                  Grid.Row="1"
+                                  Padding="0 0 12 0"
+                                  Placeholder="File A">
+                    <interactivity:Interaction.Behaviors>
+                        <behaviors:Offset AutomaticallyStart="True"
+                                          Duration="0"
+                                          OffsetY="36" />
+                        <behaviors:Offset x:Name="FileProcessingPanelAOffset"
+                                          AutomaticallyStart="False"
+                                          Duration="{StaticResource FileProcessingAnimationDuration}"
+                                          EasingMode="EaseOut"
+                                          EasingType="Sine"
+                                          OffsetY="0" />
+                        <behaviors:Offset x:Name="FileProcessingDonePanelAOffset"
+                                          AutomaticallyStart="False"
+                                          Duration="{StaticResource FileProcessingAnimationDuration}"
+                                          EasingMode="EaseOut"
+                                          EasingType="Sine"
+                                          OffsetY="36" />
+                    </interactivity:Interaction.Behaviors>
+                </local:FilePicker>
+                <local:FilePicker x:Name="FilePickerB"
+                                  DataContext="{x:Bind ViewModelB, Mode=OneWay}"
+                                  FileProcessingEnded="FilePicker_FileProcessingEnded"
+                                  FileProcessingStarted="FilePicker_FileProcessingStarted"
+                                  Grid.Column="1"
+                                  Grid.Row="1"
+                                  Padding="12 0 0 0"
+                                  Placeholder="File B">
+                    <interactivity:Interaction.Behaviors>
+                        <behaviors:Offset AutomaticallyStart="True"
+                                          Duration="0"
+                                          OffsetY="36" />
+                        <behaviors:Offset x:Name="FileProcessingPanelBOffset"
+                                          AutomaticallyStart="False"
+                                          Duration="{StaticResource FileProcessingAnimationDuration}"
+                                          EasingMode="EaseOut"
+                                          EasingType="Sine"
+                                          OffsetY="0" />
+                        <behaviors:Offset x:Name="FileProcessingDonePanelBOffset"
+                                          AutomaticallyStart="False"
+                                          Duration="{StaticResource FileProcessingAnimationDuration}"
+                                          EasingMode="EaseOut"
+                                          EasingType="Sine"
+                                          OffsetY="36" />
+                    </interactivity:Interaction.Behaviors>
+                </local:FilePicker>
+            </Grid>
+        </toolkit:DropShadowPanel>
+        <controls:SnackNotification x:Name="BottomSnack"
+                                    Background="{ThemeResource SystemControlAcrylicElementBrush}"
+                                    BorderBrush="{ThemeResource SystemAccentColor}"
+                                    BorderThickness="1 1 1 0"
+                                    CornerRadius="5 5 0 0"
+                                    DataTemplateSelector="{StaticResource SnackNotificationDataTemplateSelector}"
+                                    Grid.Row="2"
+                                    HorizontalAlignment="Stretch"
+                                    MaxWidth="444"
+                                    VerticalAlignment="Bottom" />
+    </Grid>
+</Page>
